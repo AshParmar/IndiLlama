@@ -139,8 +139,66 @@ Compare w/o hints.
 
 Add: confusion matrix, per-class breakdown, statistical test (McNemar) for significance between top two models.
 
+## 9.1 Lexicon Scoring Notebook (`sentiwordnet.ipynb`)
+This notebook operationalizes the re-scoring of the Google-translation derived lexicon (`marathi_sentiwordnet_google.csv`) using **NLTK SentiWordNet** lookups on the English translation token of each Marathi entry.
+
+### Outputs
+- `marathi_word_sentiments.csv` with columns:
+   - `marathi_word`
+   - `sentiment_label` (one of `+`, `-`, `neutral`)
+   - `pos_score`, `neg_score`, `obj_score` (averaged over all WordNet synsets for the English lemma)
+   - `english_translation`
+   - (Optional passthrough) `synset_id`, `pos` if present in the source file.
+
+### Labeling Heuristic
+1. Normalize English translation (strip brackets, punctuation, keep first token).
+2. Collect all WordNet synsets for the lemma; acquire each synset's SentiWordNet triple (pos / neg / obj).
+3. Average scores across synsets (coarse approximation; future improvement: disambiguate using POS or gloss similarity).
+4. Assign label:
+    - If `pos==0 and neg==0` → `neutral`.
+    - Else if `pos - neg > 0.05` → `+`.
+    - Else if `neg - pos > 0.05` → `-`.
+    - Else `neutral`.
+
+### Word Cloud Visualization
+The notebook includes a Devanagari-aware word cloud step that:
+- Auto-detects a system font (tries: Nirmala UI, Mangal, Kokila, Arial Unicode MS).
+- Falls back to downloading **Noto Sans Devanagari** if none found.
+- Colors tokens by sentiment label (`+` green, `-` red, neutral gray).
+
+### Diagnostics Cell
+Before rendering the cloud, a diagnostics cell reports:
+- Total rows, unique Marathi words.
+- Count of words containing Devanagari codepoints (U+0900–U+097F).
+- Sample of first words & top frequency items.
+If *zero* words contain Devanagari characters, the source file likely uses transliteration or has encoding issues; the cloud will appear empty.
+
+### Common Issues & Fixes
+| Issue | Symptom | Resolution |
+|-------|---------|------------|
+| No Devanagari glyphs rendered | Empty / blank word cloud | Ensure `marathi_word` column truly contains native script; open CSV in UTF-8 aware editor. |
+| Font warning printed | Marathi squares/tofu in cloud | Manually set `font_path = r"C:/Windows/Fonts/Mangal.ttf"` (or another valid font) in the word cloud cell. |
+| All labels `neutral` | Value counts dominated by neutral | Threshold 0.05 may be high; try 0.02 or perform POS filtering to reduce averaging noise. |
+| Very sparse non-zero scores | Most lemmas not in WordNet | Implement backoff: morphological simplification, bilingual pivot, or embedding similarity search to nearest English lemma. |
+| Mixed noisy English translations | Bracketed artifacts remain | Strengthen cleaning regex (already strips `[ ... ]` segments) or filter multi-word phrases. |
+
+### Planned Enhancements
+- Synset disambiguation via gloss similarity (cosine over sentence embeddings).
+- POS-constrained scoring (restrict synsets to the Marathi POS tag).
+- Importance weighting by synset frequency / sense rank instead of uniform mean.
+- Integration of polarity magnitude into model input features (e.g., per sentence aggregated sums & proportions).
+
+### Quick Use
+Run cells sequentially in `sentiwordnet.ipynb` to produce `marathi_word_sentiments.csv`, then:
+```python
+import pandas as pd
+lex_sent = pd.read_csv('marathi_word_sentiments.csv')
+lex_sent['sentiment_label'].value_counts()
+```
+
 ## 10. Roadmap
-- [ ] Recompute reliable polarity scores (non-zero) via re-alignment.
+- [x] Recompute polarity scores prototype (averaged lemma-based SentiWordNet via notebook).
+- [ ] Refine scoring with POS & sense disambiguation.
 - [ ] Implement lexicon feature extractor module.
 - [ ] Train baseline classical + transformer models.
 - [ ] Add prompt-based augmentation experiment.
@@ -149,6 +207,8 @@ Add: confusion matrix, per-class breakdown, statistical test (McNemar) for signi
 - [ ] Evaluation + ablation report.
 - [ ] Error analysis: inspect top misclassifications; refine lexicon or negation handling.
 - [ ] Package pipeline into reproducible scripts + notebook.
+- [ ] Add automated font detection & fallback test in CI (optional).
+- [ ] Add gloss-based synset disambiguation prototype.
 
 ## 11. Potential Improvements
 - Morphological normalization: integrate light stemmer for Marathi (rule-based or unsupervised) to boost lexicon coverage.
