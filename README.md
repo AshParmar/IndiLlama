@@ -25,7 +25,7 @@ Step 5: Fine-tune Large Language Models (LLMs) with this enriched dataset to imp
 
 Clone the repo and install the required dependencies:  
 
-```bash
+'''bash
 # clone the repository
 git clone https://github.com/your-username/marathi-sentiment-lexicon.git
 cd marathi-sentiment-lexicon
@@ -39,8 +39,6 @@ venv\Scripts\activate      # on Windows
 pip install -r requirements.txt
 
 '''
-
-
 
 📂 Dataset
 
