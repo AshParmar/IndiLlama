@@ -1,0 +1,11 @@
+ipykernel
+nltk
+pandas
+numpy
+googletrans==4.0.0-rc1
+transformers 
+sentencepiece
+torch
+sympy==1.13.1
+
+huggingface-hub
