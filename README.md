@@ -21,10 +21,26 @@ Step 5: Fine-tune Large Language Models (LLMs) with this enriched dataset to imp
 ✔️ Sentiment analysis of L3Cube tweets
 ✔️ LLM fine-tuning pipeline (Hugging Face Transformers)
 
-🚀 Installation
-git clone https://github.com/your-username/marathi-senti-llm.git
-cd marathi-senti-llm
+## ⚙️ Installation  
+
+Clone the repo and install the required dependencies:  
+
+```bash
+# clone the repository
+git clone https://github.com/your-username/marathi-sentiment-lexicon.git
+cd marathi-sentiment-lexicon
+
+# create virtual environment (optional but recommended)
+python -m venv venv
+source venv/bin/activate   # on Linux/Mac
+venv\Scripts\activate      # on Windows
+
+# install requirements
 pip install -r requirements.txt
+
+'''
+
+
 
 📂 Dataset
 
