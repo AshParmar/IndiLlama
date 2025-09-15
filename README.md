@@ -19,6 +19,7 @@ Low-resource Indic languages like Marathi lack large high-quality sentiment reso
 | `marathi_sa_lexicon_approach.ipynb` | Lexicon-focused baseline (movie reviews + balanced combined data). Tokenization, lexicon mapping, prediction aggregation, evaluation, word clouds, error analysis | `movie_review_predictions_lexicon.csv` |
 | `google_translate.ipynb`, `mariante_translate.ipynb` | Alternative translation experiments feeding lexicon enrichment | Intermediate translated CSV variants |
 | `lexi.ipynb`, `lexin.ipynb` | Lexicon exploration / refinement experiments | Variant lexicon CSVs |
+| `sentiwordnet_for_words.ipynb` | Builds Marathi ↔ English lexicon using SentiWordNet averaging; assigns polarity labels and exports final lexicon | `marathi_word_sentiments.csv` |
 
 ---
 ## 3. Repository Structure (Essentials)
@@ -113,6 +114,40 @@ lexicon_coverage = matched_tokens_count / (matched_tokens_count + unmatched_toke
 Use as a routing signal (e.g., send low-coverage sentences to an ML model).
 
 Idempotency: Updated notebook adds `ensure_review_predictions()` so re-running cells out of order auto-generates missing prediction columns.
+
+### 8.1 Lexicon Builder Notebook (`sentiwordnet_for_words.ipynb`)
+This notebook was restored and is now explicitly documented. It constructs the Marathi sentiment lexicon by:
+1. Loading a source CSV (e.g., `marathi_sentiwordnet_google.csv`) containing columns such as `marathi_word`, `english_word` (or translation), optional POS / synset IDs.
+2. Normalizing English tokens (lowercasing, stripping bracketed metadata, removing non‑alphabetic chars, keeping only the first token if multi-word).
+3. Fetching all WordNet synsets for each English lemma and averaging their SentiWordNet (`pos`, `neg`, `obj`) scores (simple first-pass heuristic).
+4. Assigning a sentiment label with a small margin (default 0.05) to avoid classifying near-ties as strongly polarized.
+5. (Optional) Generating a color-coded word cloud (green = positive, red = negative, grey = neutral) with Devanagari font auto-detection / fallback download.
+6. Exporting `marathi_word_sentiments.csv` used by downstream lexicon baseline notebooks.
+
+Label scheme in the restored version may use symbolic labels (`+`, `-`, `neutral`). For consistency with the rest of the pipeline (which expects `positive`, `negative`, `neutral`), map them after loading:
+```python
+lex = pd.read_csv('marathi_word_sentiments.csv')
+symbol_map = {'+':'positive','-':'negative','positive':'positive','negative':'negative'}
+lex['sentiment_label'] = lex['sentiment_label'].map(symbol_map).fillna('neutral')
+```
+
+If you plan to regenerate the lexicon with multi-synset strategies or lemmatization, consider swapping the simple average for:
+* First-sense only (fast, less noise) – already partially supported.
+* Frequency-weighted average using sense frequency counts (requires additional resources).
+* Top-K mean (e.g., mean of first 3 synsets) to reduce outlier influence.
+
+Utility function recommendation: If you frequently probe ad-hoc English word lists, lift the scoring logic into a helper similar to:
+```python
+def sentiwordnet_for_words(words, aggregate='sum', margin=0.05):
+    # returns dict: {'pos':..., 'neg':..., 'obj':..., 'count':..., 'label':..., 'details':[...]}
+    ...
+```
+and reuse it both in the lexicon builder and evaluation notebooks (avoids duplication and keeps classification thresholds centralized).
+
+Quality caveats:
+* Averaging across all synsets can dilute polarity; sense disambiguation or restricting to top-1 improves precision at the cost of recall.
+* Marathi → English translation noise can inject misleading lemmas—include a frequency or confidence filter if available.
+* Neutral dominance is expected for words lacking strong polarity; verify distribution to avoid skew.
 
 ---
 ## 9. Command & Data Reference
