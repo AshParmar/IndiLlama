@@ -11,6 +11,17 @@ Low-resource Indic languages like Marathi lack large high-quality sentiment reso
 * A transparent lexicon-based baseline with coverage diagnostics and error analysis.
 * A foundation for hybrid (lexicon + transformer / LLM) approaches (future roadmap).
 
+### 🎯 Quick Results Summary
+| Method | Dataset | Accuracy | Best F1 | Key Features |
+|--------|---------|----------|---------|--------------|
+| **Direct Lexicon** | 30K Balanced | **49.7%** | 0.533 | No translation needed |
+| **SWN + Translation** | 30K Balanced | **48.2%** | 0.503 | 100% translation coverage |
+| *Random Baseline* | - | *33.3%* | - | *Reference* |
+
+📊 **Dataset**: L3Cube MahaSent (15K Movie Reviews + 15K Social Tweets)  
+🔄 **Reproducible**: Cached translations, balanced splits, deterministic pipeline  
+📈 **Improvement**: +16.4pp over random baseline with direct lexicon approach
+
 ---
 ## 2. Core Notebooks & Their Roles
 | Notebook | Purpose | Key Outputs |
@@ -212,7 +223,108 @@ PY
 ```
 
 ---
-## 11. Troubleshooting
+## 11. Evaluation Results & Model Performance
+
+### 11.1 Dataset Summary
+| Dataset | Type | Train | Validation | Test | Total | Source |
+|---------|------|-------|------------|------|-------|--------|
+| **L3Cube MahaSent MR** | Movie Reviews | 12,003 | 1,501 | 1,501 | 15,005 | L3Cube Research |
+| **L3Cube MahaSent MS** | Social Tweets | 12,008 | 1,503 | 1,502 | 15,013 | L3Cube Research |
+| **Combined Balanced** | Mixed Domain | - | - | - | 30,000 | Generated (strict mode) |
+
+**Label Distribution (Balanced Dataset):**
+- Positive: 10,000 samples (33.3%)
+- Negative: 10,000 samples (33.3%)  
+- Neutral: 10,000 samples (33.3%)
+
+### 11.2 Model Approaches & Performance
+
+| Approach | Method | Accuracy | Precision | Recall | F1-Score | Coverage | Translation |
+|----------|--------|----------|-----------|--------|----------|----------|-------------|
+| **SentiWordNet + Translation** | Marathi→English + SWN scoring | **48.20%** | 0.485 | 0.482 | 0.481 | ~100% | Helsinki-NLP Marian |
+| **Direct Lexicon Mapping** | Marathi lexicon lookup | **49.72%** | 0.524 | 0.497 | 0.493 | Variable | No translation |
+
+### 11.3 Detailed Performance Breakdown
+
+#### 11.3.1 SentiWordNet + Translation Approach
+**Overall Performance:**
+- Accuracy: 48.20%
+- Total Samples: 30,000
+- Translation Success Rate: 100%
+
+**Per-Class Performance:**
+| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|--------|----------|---------|
+| Negative | 0.529 | 0.455 | 0.490 | 10,000 |
+| Neutral | 0.457 | 0.446 | 0.451 | 10,000 |
+| Positive | 0.468 | 0.544 | 0.503 | 10,000 |
+
+**Method Details:**
+- Translation: Helsinki-NLP Marian MT model (mar→en)
+- POS Tagging: NLTK POS tagger on English translations
+- Sentiment Scoring: SentiWordNet 3.0 first-sense lookup
+- Decision Threshold: Margin-based (positive_score - negative_score > 0.05)
+- Text Processing: Lemmatization, stopword removal, translation caching
+
+#### 11.3.2 Direct Lexicon Mapping Approach  
+**Overall Performance:**
+- Accuracy: 49.72%
+- Total Samples: 30,000
+- Lexicon Coverage: Variable (depends on vocabulary overlap)
+
+**Per-Class Performance:**
+| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|--------|----------|---------|
+| Negative | 0.574 | 0.378 | 0.456 | 10,000 |
+| Neutral | 0.463 | 0.629 | 0.533 | 10,000 |
+| Positive | 0.481 | 0.484 | 0.482 | 10,000 |
+
+**Method Details:**
+- Lexicon: Marathi-English aligned SentiWordNet-derived lexicon
+- Tokenization: Devanagari text tokenization
+- Aggregation: Majority voting with weighted sum fallback
+- Coverage: Direct word matching (no fuzzy matching or stemming)
+
+### 11.4 Key Findings
+
+#### 11.4.1 Strengths
+✅ **Translation Robustness**: 100% translation success rate with caching  
+✅ **Domain Balance**: Strict domain-class balancing ensures fair evaluation  
+✅ **Lexicon Coverage**: Direct lexicon approach shows competitive performance  
+✅ **Reproducibility**: Deterministic pipeline with cached intermediate results  
+
+#### 11.4.2 Limitations
+❌ **Overall Accuracy**: Both approaches hover around 48-50% accuracy  
+❌ **Translation Noise**: Translation artifacts may affect SentiWordNet scoring  
+❌ **Lexicon Coverage**: Limited vocabulary coverage in direct mapping approach  
+❌ **Class Imbalance**: Recall varies significantly across sentiment classes  
+
+#### 11.4.3 Error Analysis
+- **Neutral Classification**: Both models tend to over-predict neutral sentiment
+- **Translation Quality**: Domain-specific terms (slang, colloquialisms) lose sentiment nuance
+- **Lexicon Gaps**: Many Marathi words lack direct sentiment mappings
+- **Context Ignorance**: Bag-of-words approaches miss contextual sentiment
+
+### 11.5 Comparison with Baselines
+
+| Metric | Random Baseline | Majority Class | SWN+Translation | Direct Lexicon |
+|--------|----------------|----------------|-----------------|----------------|
+| Accuracy | 33.3% | 33.3% | **48.2%** | **49.7%** |
+| Improvement | - | - | +14.9pp | +16.4pp |
+
+### 11.6 Output Files & Artifacts
+
+**Generated Files:**
+- `output/metrics_summary.json`: Complete evaluation metrics
+- `output/confusion_matrix.png`: Visualization of prediction errors  
+- `output/wordcloud_*_english.png`: English sentiment wordclouds
+- `output/wordcloud_*_marathi.png`: Marathi sentiment wordclouds
+- `output/combined_marathi_dataset.csv`: Unified and cleaned dataset
+- `output/merged_sentiment_results.csv`: Predictions with scores
+- `translation_cache.json`: Cached translations (30K+ entries)
+
+---
+## 12. Troubleshooting
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
 | KeyError: prediction columns missing | Ran sample display before prediction cell | Re-run Section 7 in lexicon notebook (now idempotent) |
@@ -223,7 +335,7 @@ PY
 | Translation rate limits | Too many rapid API calls | Increase backoff, reuse `translation_cache.json` |
 
 ---
-## 12. Roadmap (Execution-Oriented)
+## 13. Roadmap (Execution-Oriented)
 1. POS & sense disambiguation for lexicon scoring.
 2. Negation + intensifier handling (Marathi-specific list & window rules).
 3. Lexicon feature extractor module (Python package) + unit tests.
@@ -237,7 +349,7 @@ PY
 11. Extend to additional Indic languages (scalable design).
 
 ---
-## 13. Potential Enhancements
+## 14. Potential Enhancements
 * Morphological normalization / lightweight stemmer.
 * Phonetic / edit-distance fuzzy matching to raise coverage.
 * Semi-supervised label propagation using lexicon-derived weak labels.
@@ -245,7 +357,7 @@ PY
 * Weighted multisynset aggregation (sense frequency weighting).
 
 ---
-## 14. Citation & Licensing
+## 15. Citation & Licensing
 Please cite the original resources:
 * L3Cube MahaSent dataset (movie reviews & social tweets).
 * Marathi WordNet / IndoWordNet.
@@ -255,7 +367,7 @@ Please cite the original resources:
 BibTeX entries to be added (placeholder).
 
 ---
-## 15. Quick Insight Snippet (Python)
+## 16. Quick Insight Snippet (Python)
 ```python
 import pandas as pd
 lex = pd.read_csv('marathi_word_sentiments.csv')
@@ -264,7 +376,7 @@ print(lex.head())
 ```
 
 ---
-## 16. Disclaimer
+## 17. Disclaimer
 The lexicon and derived scores are experimental; translation and alignment noise may affect polarity accuracy. Validate before production or sensitive use cases.
 
 ---

@@ -16,3 +16,8 @@ seaborn>=0.13.0
 scikit-learn>=1.4.0
 tqdm>=4.66.0
 huggingface-hub>=0.22.0
+hf-xet
+nltk
+huggingface_hub[hf_xet]
+stanza
+libindic-stemmer

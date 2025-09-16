@@ -1,0 +1,13 @@
+{
+  "results_csv": "output\\merged_sentiment_results.csv",
+  "confusion_matrix": "output\\confusion_matrix.png",
+  "translation_cache": "translation_cache_offline.json",
+  "word_clouds": {
+    "positive_english": "output\\wordcloud_positive_english.png",
+    "positive_marathi": "output\\wordcloud_positive_marathi.png",
+    "negative_english": "output\\wordcloud_negative_english.png",
+    "negative_marathi": "output\\wordcloud_negative_marathi.png",
+    "neutral_english": "output\\wordcloud_neutral_english.png",
+    "neutral_marathi": "output\\wordcloud_neutral_marathi.png"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "accuracy": 0.48196666666666665,
+  "evaluation_samples": 30000,
+  "per_class": {
+    "negative": {
+      "precision": 0.5294733170561563,
+      "recall": 0.4554,
+      "f1": 0.48965109402720286,
+      "support": 10000
+    },
+    "neutral": {
+      "precision": 0.456713057715923,
+      "recall": 0.4463,
+      "f1": 0.4514464899858386,
+      "support": 10000
+    },
+    "positive": {
+      "precision": 0.4680485077836071,
+      "recall": 0.5442,
+      "f1": 0.5032598141212373,
+      "support": 10000
+    }
+  },
+  "dataset_info": {
+    "total_samples": 30000,
+    "translation_success_rate": 1.0,
+    "predicted_distribution": {
+      "positive": 
