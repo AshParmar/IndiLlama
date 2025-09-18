@@ -14,7 +14,7 @@ Low-resource Indic languages like Marathi lack large high-quality sentiment reso
 ### 🎯 Quick Results Summary
 | Method | Dataset | Accuracy | Best F1 | Key Features |
 |--------|---------|----------|---------|--------------|
-| **Direct Lexicon** | 30K Balanced | **49.7%** | 0.533 | No translation needed |
+| **Direct Lexicon** | 30K Balanced | **49.7%** | 0.533 | Word based translation |
 | **SWN + Translation (Google)** | 30K Balanced | **53.4%** | 0.570 | 100% translation coverage |
 | **SWN + Translation (Marian)** | 30K Balanced | **48.2%** | 0.503 | Offline Marian MT pipeline |
 | *Random Baseline* | - | *33.3%* | - | *Reference* |
@@ -46,8 +46,7 @@ translation_cache.json       # Persisted translation results (Marathi -> English
 Additional CSVs (`marathi_sentiwordnet_google.csv`, `marathi_sentiwordnet_mariante.csv`, `marathi_lexicon_correct_pos.csv`) represent intermediate lexicon variants.
 
 ---
-## 4. Datasets
-### 4.1 L3Cube MahaSent (Movie Reviews + Social Tweets)
+## 4. Data### 4.1 L3Cube MahaSent (Movie Reviews + Marathi Subtitles)
 * Multiple CSV splits typically: `MahaSent_MR_Train.csv`, `MahaSent_ST_Train.csv`, etc.
 * Labels appear as text or numeric variants: {-1, 0, 1} mapped to {negative, neutral, positive}.
 
