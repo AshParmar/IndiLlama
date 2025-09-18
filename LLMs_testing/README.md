@@ -86,6 +86,7 @@ The performance of each fine-tuned model was evaluated on the held-out test set.
 
 | Model                         |   Baseline Accuracy |   Baseline F1 |   Finetuned Accuracy |   Finetuned F1 |   Run Directory | Model Link |
 |:------------------------------|--------------------:|--------------:|---------------------:|---------------:|----------------:|:-----------|
+| Ensemble (Muril+Albert+MBERT) |                   — |             — |             0.908000 |       0.907620 |        Ensemble | [Ensemble Note](ENSEMBLE.md) |
 | google/muril-base-cased       |            0.333333 |      0.166667 |             0.794333 |       0.79255  | 20250917_142448 | [google/muril-base-cased](https://huggingface.co/AshParmar/XMR-Muril) |
 | l3cube-pune/marathi-albert-v2 |            0.333333 |      0.166667 |             0.780333 |       0.779034 | 20250917_180532 | [l3cube-pune/marathi-albert-v2](https://huggingface.co/AshParmar/XMR-Albert) |
 | l3cube-pune/marathi-bert      |            0.331    |      0.168996 |             0.778333 |       0.776411 | 20250917_173302 | [l3cube-pune/marathi-bert](https://huggingface.co/AshParmar/XMR-MBERT) |
@@ -96,6 +97,30 @@ The performance of each fine-tuned model was evaluated on the held-out test set.
 ![Accuracy Comparison](images/accuracy_comparison.png)
 
 As evidenced by the results, **google/muril-base-cased** significantly outperforms the other models, achieving an F1-score of **0.7926**. This suggests that models specifically pretrained on or for Indic languages, which often include transliterated and mixed-language data, hold a considerable advantage over general multilingual models for this task.
+
+### 4.1.1. Ensemble Inference (Soft Voting)
+
+To squeeze out a bit more performance, you can ensemble multiple uploaded models from Hugging Face via weighted soft-voting. A helper script `ensemble_inference.py` is provided to load 2–3 models, run batched inference on the test split, and compute metrics.
+
+Defaults (from the top-3 models above):
+- Models: `AshParmar/XMR-Muril`, `AshParmar/XMR-Albert`, `AshParmar/XMR-MBERT`
+- Weights: derived from the models' macro F1 (normalized internally)
+
+Try it (Windows PowerShell):
+
+```powershell
+# From the LLMs_testing folder
+python .\ensemble_inference.py --test-csv ..\output\combined_dataset\test_strict.csv --label-col label
+
+# Customize models or weights (example)
+python .\ensemble_inference.py --models AshParmar/XMR-Muril AshParmar/XMR-Albert --weights 0.8 0.2 --test-csv ..\output\combined_dataset\test_strict.csv
+```
+
+Outputs:
+- `../output/ensemble_results.json` — accuracy, macro F1, classification report, confusion matrix
+- `../output/ensemble_predictions.csv` — test rows with predicted labels appended
+
+For a deeper dive (method, equations, limitations), see `ENSEMBLE.md`.
 
 ### 4.2. Qualitative Error Analysis
 
