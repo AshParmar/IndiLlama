@@ -1,0 +1,18 @@
+{
+  "model": "bert-base-multilingual-cased",
+  "device": "cuda",
+  "dataset": "C:\\LLM's_for_SA\\output\\balanced_mode_strict_domain.csv",
+  "outputs": "C:\\LLM's_for_SA\\results\\notebook_run\\20250917_162312",
+  "baseline": {
+    "accuracy": 0.3443333333333333,
+    "precision_macro": 0.31054613731350894,
+    "recall_macro": 0.3443333333333334,
+    "f1_macro": 0.2564537960610234
+  },
+  "finetuned": {
+    "accuracy": 0.742,
+    "precision_macro": 0.7414009061578902,
+    "recall_macro": 0.742,
+    "f1_macro": 0.7400749444070601
+  }
+}

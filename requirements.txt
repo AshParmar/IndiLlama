@@ -20,4 +20,6 @@ hf-xet
 nltk
 huggingface_hub[hf_xet]
 stanza
-libindic-stemmer
+
+uvicorn
+langflow

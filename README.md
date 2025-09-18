@@ -15,7 +15,8 @@ Low-resource Indic languages like Marathi lack large high-quality sentiment reso
 | Method | Dataset | Accuracy | Best F1 | Key Features |
 |--------|---------|----------|---------|--------------|
 | **Direct Lexicon** | 30K Balanced | **49.7%** | 0.533 | No translation needed |
-| **SWN + Translation** | 30K Balanced | **48.2%** | 0.503 | 100% translation coverage |
+| **SWN + Translation (Google)** | 30K Balanced | **53.4%** | 0.570 | 100% translation coverage |
+| **SWN + Translation (Marian)** | 30K Balanced | **48.2%** | 0.503 | Offline Marian MT pipeline |
 | *Random Baseline* | - | *33.3%* | - | *Reference* |
 
 📊 **Dataset**: L3Cube MahaSent (15K Movie Reviews + 15K Social Tweets)  
@@ -26,7 +27,7 @@ Low-resource Indic languages like Marathi lack large high-quality sentiment reso
 ## 2. Core Notebooks & Their Roles
 | Notebook | Purpose | Key Outputs |
 |----------|---------|-------------|
-| `marathi_sentiment_swn_pipeline.ipynb` | Unified pipeline: dataset discovery, cleaning, translation (cached), optional domain-class balancing, SentiWordNet scoring | `output/combined_marathi_dataset.csv`, `translation_cache.json`, balanced splits under `output/combined_dataset/`, scored columns (pos/neg/objective) in merged frame |
+| `marathi_sentiment_swn_pipeline.ipynb` | Unified pipeline: dataset discovery, cleaning, translation (cached via Google Translate), optional domain-class balancing, SentiWordNet scoring | `output/combined_marathi_dataset.csv`, `translation_cache.json`, balanced splits under `output/combined_dataset/`, scored columns (pos/neg/objective) in merged frame |
 | `marathi_sa_lexicon_approach.ipynb` | Lexicon-focused baseline (movie reviews + balanced combined data). Tokenization, lexicon mapping, prediction aggregation, evaluation, word clouds, error analysis | `movie_review_predictions_lexicon.csv` |
 | `google_translate.ipynb`, `mariante_translate.ipynb` | Alternative translation experiments feeding lexicon enrichment | Intermediate translated CSV variants |
 | `lexi.ipynb`, `lexin.ipynb` | Lexicon exploration / refinement experiments | Variant lexicon CSVs |
@@ -241,16 +242,40 @@ PY
 
 | Approach | Method | Accuracy | Precision | Recall | F1-Score | Coverage | Translation |
 |----------|--------|----------|-----------|--------|----------|----------|-------------|
-| **SentiWordNet + Translation** | Marathi→English + SWN scoring | **48.20%** | 0.485 | 0.482 | 0.481 | ~100% | Helsinki-NLP Marian |
+| **SentiWordNet + Translation (Google)** | Marathi→English + SWN scoring | **53.39%** | 0.538 | 0.534 | 0.533 | ~100% | Google Translate (deep_translator) |
+| **SentiWordNet + Translation (Marian)** | Marathi→English + SWN scoring | **48.20%** | 0.485 | 0.482 | 0.481 | ~100% | Helsinki-NLP Marian |
 | **Direct Lexicon Mapping** | Marathi lexicon lookup | **49.72%** | 0.524 | 0.497 | 0.493 | Variable | No translation |
 
 ### 11.3 Detailed Performance Breakdown
 
-#### 11.3.1 SentiWordNet + Translation Approach
+#### 11.3.1 SentiWordNet + Translation Approach (Google Translate)
+**Overall Performance:**
+- Accuracy: 53.39%
+- Total Samples: 30,000
+- Translation Success Rate: 100%
+
+**Per-Class Performance:**
+| Class | Precision | Recall | F1-Score | Support |
+|-------|-----------|--------|----------|---------|
+| Negative | 0.593 | 0.488 | 0.536 | 10,000 |
+| Neutral | 0.485 | 0.505 | 0.495 | 10,000 |
+| Positive | 0.536 | 0.609 | 0.570 | 10,000 |
+
+**Method Details:**
+- Artifacts: See `output/metrics_summary.json` for the full metrics dump and `output/confusion_matrix.png` for the confusion matrix image.
+- Notebook: `marathi_sentiment_swn_pipeline.ipynb` (sections on translation and evaluation)
+
+- Translation: Google Translate via deep_translator (Marathi → English) with caching
+- POS Tagging: NLTK POS tagger on English translations
+- Sentiment Scoring: SentiWordNet 3.0 with synset score aggregation (pos/neg/obj)
+- Decision Threshold: Margin-based (positive_score - negative_score > 0.05)
+- Text Processing: Lemmatization, stopword removal, translation caching
+
+#### 11.3.2 SentiWordNet + Translation Approach (Marian MT)
 **Overall Performance:**
 - Accuracy: 48.20%
 - Total Samples: 30,000
-- Translation Success Rate: 100%
+- Translation Success Rate: ~100%
 
 **Per-Class Performance:**
 | Class | Precision | Recall | F1-Score | Support |
@@ -266,7 +291,9 @@ PY
 - Decision Threshold: Margin-based (positive_score - negative_score > 0.05)
 - Text Processing: Lemmatization, stopword removal, translation caching
 
-#### 11.3.2 Direct Lexicon Mapping Approach  
+Artifacts for this run may be saved under `output/` as well (e.g., metrics/figures); if running both pipelines, consider suffixing or subfolders to avoid overwrite.
+
+#### 11.3.3 Direct Lexicon Mapping Approach  
 **Overall Performance:**
 - Accuracy: 49.72%
 - Total Samples: 30,000
@@ -294,8 +321,8 @@ PY
 ✅ **Reproducibility**: Deterministic pipeline with cached intermediate results  
 
 #### 11.4.2 Limitations
-❌ **Overall Accuracy**: Both approaches hover around 48-50% accuracy  
-❌ **Translation Noise**: Translation artifacts may affect SentiWordNet scoring  
+❌ **Overall Accuracy**: Lexicon-only remains ~50%; SWN+Translate varies by MT (≈48–53%)  
+❌ **Translation Noise**: Translation artifacts (esp. Marian vs Google) can affect scoring  
 ❌ **Lexicon Coverage**: Limited vocabulary coverage in direct mapping approach  
 ❌ **Class Imbalance**: Recall varies significantly across sentiment classes  
 
@@ -307,10 +334,10 @@ PY
 
 ### 11.5 Comparison with Baselines
 
-| Metric | Random Baseline | Majority Class | SWN+Translation | Direct Lexicon |
-|--------|----------------|----------------|-----------------|----------------|
-| Accuracy | 33.3% | 33.3% | **48.2%** | **49.7%** |
-| Improvement | - | - | +14.9pp | +16.4pp |
+| Metric | Random Baseline | Majority Class | SWN+Translation (Google) | SWN+Translation (Marian) | Direct Lexicon |
+|--------|----------------|----------------|---------------------------|-------------------------|----------------|
+| Accuracy | 33.3% | 33.3% | **53.4%** | 48.2% | **49.7%** |
+| Improvement | - | - | +20.1pp | +14.9pp | +16.4pp |
 
 ### 11.6 Output Files & Artifacts
 

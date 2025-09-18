@@ -1,0 +1,18 @@
+{
+  "model": "l3cube-pune/marathi-albert-v2",
+  "device": "cuda",
+  "dataset": "C:\\LLM's_for_SA\\output\\balanced_mode_strict_domain.csv",
+  "outputs": "C:\\LLM's_for_SA\\results\\notebook_run\\20250917_180532",
+  "baseline": {
+    "accuracy": 0.3333333333333333,
+    "precision_macro": 0.1111111111111111,
+    "recall_macro": 0.3333333333333333,
+    "f1_macro": 0.16666666666666666
+  },
+  "finetuned": {
+    "accuracy": 0.7803333333333333,
+    "precision_macro": 0.779222967361552,
+    "recall_macro": 0.7803333333333332,
+    "f1_macro": 0.7790339456843268
+  }
+}
