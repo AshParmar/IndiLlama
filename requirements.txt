@@ -21,3 +21,5 @@ nltk
 huggingface_hub[hf_xet]
 stanza
 libindic-stemmer
+scikit-learn
+requests
