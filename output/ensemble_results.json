@@ -1,0 +1,74 @@
+{
+  "metrics": {
+    "accuracy": 0.908,
+    "macro_f1": 0.9076203197514867,
+    "classification_report": {
+      "negative": {
+        "precision": 0.8946700507614214,
+        "recall": 0.94,
+        "f1-score": 0.9167750325097529,
+        "support": 1500.0
+      },
+      "neutral": {
+        "precision": 0.8973277074542897,
+        "recall": 0.8506666666666667,
+        "f1-score": 0.8733744010951403,
+        "support": 1500.0
+      },
+      "positive": {
+        "precision": 0.9320905459387483,
+        "recall": 0.9333333333333333,
+        "f1-score": 0.9327115256495669,
+        "support": 1500.0
+      },
+      "accuracy": 0.908,
+      "macro avg": {
+        "precision": 0.908029434718153,
+        "recall": 0.908,
+        "f1-score": 0.9076203197514867,
+        "support": 4500.0
+      },
+      "weighted avg": {
+        "precision": 0.9080294347181531,
+        "recall": 0.908,
+        "f1-score": 0.9076203197514867,
+        "support": 4500.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        1410,
+        68,
+        22
+      ],
+      [
+        144,
+        1276,
+        80
+      ],
+      [
+        22,
+        78,
+        1400
+      ]
+    ]
+  },
+  "metadata": {
+    "models": [
+      "AshParmar/XMR-Muril",
+      "AshParmar/XMR-Albert",
+      "AshParmar/XMR-MBERT"
+    ],
+    "weights": [
+      0.79255,
+      0.779034,
+      0.776411
+    ],
+    "device": "cuda",
+    "test_csv": "C:\\IndiLlama\\IndiLlama\\output\\test_strict_domain.csv",
+    "text_col": "text",
+    "label_col": "label",
+    "batch_size": 8,
+    "max_length": 192
+  }
+}
