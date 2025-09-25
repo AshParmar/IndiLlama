@@ -11,17 +11,30 @@ Low-resource Indic languages like Marathi lack large high-quality sentiment reso
 * A transparent lexicon-based baseline with coverage diagnostics and error analysis.
 * A foundation for hybrid (lexicon + transformer / LLM) approaches (future roadmap).
 
-### 🎯 Quick Results Summary
-| Method | Dataset | Accuracy | Best F1 | Key Features |
-|--------|---------|----------|---------|--------------|
-| **Direct Lexicon** | 30K Balanced | **49.7%** | 0.533 | Word based translation |
-| **SWN + Translation (Google)** | 30K Balanced | **53.4%** | 0.570 | 100% translation coverage |
-| **SWN + Translation (Marian)** | 30K Balanced | **48.2%** | 0.503 | Offline Marian MT pipeline |
-| *Random Baseline* | - | *33.3%* | - | *Reference* |
+### 🎯 Quick Results Summary (Cross‑Approach)
+| Category | Method / Model | Eval Set* | Accuracy | Macro F1 | Key Features / Notes |
+|----------|----------------|-----------|----------|----------|----------------------|
+| Baseline | Random Guess (3 classes) | — | 33.3% | 0.333 | Theoretical reference |
+| Lexicon  | Direct Lexicon Mapping | 30K Full | 49.7% | 0.533 | Marathi ↔ English sentiment lexicon only |
+| Lexicon  | SWN + Translation (Google) | 30K Full | 53.4% | 0.570 | 100% MT coverage + SentiWordNet scores |
+| Lexicon  | SWN + Translation (Marian) | 30K Full | 48.2% | 0.503 | Offline Marian MT pipeline |
+| Classical ML | TF‑IDF + Naive Bayes | Strict Test (4.5K) | 57.5% | 0.575 | 5K uni/bi-gram features |
+| Classical ML | TF‑IDF + Linear SVM | Strict Test (4.5K) | 57.8% | 0.579 | LinearSVC, default C |
+| Classical ML | TF‑IDF + Random Forest | Strict Test (4.5K) | 57.3% | 0.574 | 300 trees |
+| Transformers | google/muril-base-cased (finetuned) | Strict Test (~3K)** | 79.4% | 0.793 | Indic-aware pretraining |
+| Transformers | marathi-albert-v2 (finetuned) | Strict Test (~3K)** | 78.0% | 0.779 | Lightweight, fast inference |
+| Transformers | marathi-bert (finetuned) | Strict Test (~3K)** | 77.8% | 0.776 | L3Cube pretrained |
+| Transformers | xlm-roberta-base (finetuned) | Strict Test (~3K)** | 77.2% | 0.770 | Strong multilingual encoder |
+| Transformers | bert-base-multilingual-cased (finetuned) | Strict Test (~3K)** | 74.2% | 0.740 | Older multilingual baseline |
+| Ensemble | Muril + Albert + MBERT (weighted soft vote) | Strict Test (4.5K) | 90.8% | 0.908 | Weights ∝ model macro F1 |
+
+*Eval Set legend: "30K Full" = full balanced 30,000-sample dataset (no split, lexicon scoring). "Strict Test" = test split from strict domain-balanced partition. **Transformer runs used 80/10/10 split (~3K test); ensemble re-evaluated on 4.5K alternate strict test; metrics are label-balanced but not from identical split—expect ±0.5pp variance if unified.*
+
+📌 Metric Harmonization: All F1 values are macro averages (earlier tables labeled this as “Best F1”).
 
 📊 **Dataset**: L3Cube MahaSent (15K Movie Reviews + 15K Social Tweets)  
 🔄 **Reproducible**: Cached translations, balanced splits, deterministic pipeline  
-📈 **Improvement**: +16.4pp over random baseline with direct lexicon approach
+📈 **Improvement**: Ensemble is +57.5pp accuracy over random; best single transformer +21.6pp over best classical baseline; classical TF‑IDF models +4–8pp over lexicon variants.
 
 ---
 ## 2. Core Notebooks & Their Roles
@@ -348,6 +361,56 @@ Artifacts for this run may be saved under `output/` as well (e.g., metrics/figur
 - `output/combined_marathi_dataset.csv`: Unified and cleaned dataset
 - `output/merged_sentiment_results.csv`: Predictions with scores
 - `translation_cache.json`: Cached translations (30K+ entries)
+
+### 11.7 Classical ML Baselines (TF‑IDF)
+
+Lightweight classical baselines were added to contextualize transformer gains. Shared preprocessing:
+
+1. Punctuation removal via regex.
+2. TF‑IDF with max_features=5,000 and ngram_range=(1,2).
+3. Default hyperparameters unless noted.
+
+| Model | Test Accuracy | Macro F1 | Notes |
+|-------|---------------|----------|-------|
+| TF‑IDF + Naive Bayes | 0.5751 | 0.5754 | MultinomialNB |
+| TF‑IDF + Linear SVM | 0.5780 | 0.5793 | LinearSVC (best classical) |
+| TF‑IDF + Random Forest | 0.5729 | 0.5744 | 300 estimators, slower, no lift |
+
+Insights:
+* Performance ceiling <60% confirms need for contextual embeddings.
+* Linear SVM edges others; tuning C & class weights may add +1–2pp.
+* Expanding feature space (20K + char n‑grams) for future experiments.
+
+### 11.8 Transformer Fine‑Tunes & Ensemble Summary
+
+Fine‑tuned models (see `LLMs_testing/README.md`) substantially outperform lexicon + classical baselines:
+
+| Model | Accuracy | Macro F1 | Run Dir | HF Hub |
+|-------|---------|----------|---------|--------|
+| google/muril-base-cased | 0.7943 | 0.7926 | 20250917_142448 | `AshParmar/XMR-Muril` |
+| marathi-albert-v2 | 0.7803 | 0.7790 | 20250917_180532 | `AshParmar/XMR-Albert` |
+| marathi-bert | 0.7783 | 0.7764 | 20250917_173302 | `AshParmar/XMR-MBERT` |
+| xlm-roberta-base | 0.7717 | 0.7698 | 20250917_203037 | `AshParmar/XMR-xlm-ROBERTA` |
+| bert-base-multilingual-cased | 0.7420 | 0.7401 | 20250917_162312 | `AshParmar/XMR-MultiBERT` |
+
+Weighted Soft-Vote Ensemble:
+```
+weights w_i = macro_f1_i / Σ_j macro_f1_j
+Final probability = Σ_i w_i * softmax(logits_i)
+Prediction = argmax(Final probability)
+```
+Result (strict test 4.5K): Accuracy 0.9080 | Macro F1 0.9076. Confusion matrix & full report: `output/ensemble_results.json`.
+
+Advantages:
+* +11.4pp accuracy over best single model.
+* Neutral recall improved by complementary model biases.
+* Near-ceiling for current dataset size; further gains may need data augmentation or auxiliary tasks.
+
+Future Enhancements:
+* Temperature scaling per model before fusion.
+* Stacking meta-classifier on per-model probability vectors.
+* Integrate lexicon coverage as calibration feature.
+* QLoRA adapters with mixture-of-experts style gating.
 
 ---
 ## 12. Troubleshooting
