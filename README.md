@@ -59,7 +59,8 @@ translation_cache.json       # Persisted translation results (Marathi -> English
 Additional CSVs (`marathi_sentiwordnet_google.csv`, `marathi_sentiwordnet_mariante.csv`, `marathi_lexicon_correct_pos.csv`) represent intermediate lexicon variants.
 
 ---
-## 4. Data### 4.1 L3Cube MahaSent (Movie Reviews + Marathi Subtitles)
+## 4. Data
+### 4.1 L3Cube MahaSent (Movie Reviews + Marathi Subtitles)
 * Multiple CSV splits typically: `MahaSent_MR_Train.csv`, `MahaSent_ST_Train.csv`, etc.
 * Labels appear as text or numeric variants: {-1, 0, 1} mapped to {negative, neutral, positive}.
 
